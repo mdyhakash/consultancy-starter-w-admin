@@ -8,7 +8,7 @@ import {
   Table as TableWrap,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 const selectColumn = {
@@ -48,7 +48,8 @@ const Table = ({
   noDataRender = () => null,
   logics = {},
 }) => {
-  const navigate = useNavigate();
+  const router = useRouter();
+  const navigate = (path) => router.push(path);
   const allColumns = enableSelect ? [selectColumn, ...columns] : columns;
 
   // Helper function to get nested property value

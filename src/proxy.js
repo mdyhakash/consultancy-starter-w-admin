@@ -17,6 +17,21 @@ export default async function middleware(request) {
   // Remove locale prefix to check actual route
   const pathnameWithoutLocale = pathname.replace(/^\/(en|bn|fr)/, "") || "/";
 
+  // Protect /admin/* except /admin/login
+  if (pathnameWithoutLocale.startsWith("/admin")) {
+    if (pathnameWithoutLocale === "/admin/login") {
+      if (authToken) {
+        return NextResponse.redirect(new URL("/admin", request.url));
+      }
+      return NextResponse.next();
+    }
+    if (!authToken) {
+      const loginUrl = new URL("/admin/login", request.url);
+      loginUrl.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+
   // Check if current route is protected
   const isProtectedRoute = protectedRoutes.some((route) =>
     pathnameWithoutLocale.startsWith(route),
