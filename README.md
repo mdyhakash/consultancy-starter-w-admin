@@ -44,24 +44,46 @@ Per project, **only one file changes**: `src/config/admin.config.js`.
 
 ---
 
-### 1. How to Add a Section
+### 1. How to Add a Section or Nav Item
 
-#### Adding a Singleton (Single Page / Section)
-Add an entry to `singletons` in `src/config/admin.config.js`:
+#### Adding to the Nav Tree
+In `src/config/admin.config.js`, update the `nav` tree:
+```js
+{
+  label: "About Us",
+  icon: "Info",
+  key: "about-us",
+  type: "singleton", // or "collection"
+}
+```
+Or as a collapsible group:
+```js
+{
+  label: "Company",
+  icon: "Building",
+  children: [
+    { label: "About Us", key: "about-us", type: "singleton" },
+    { label: "Our Team", key: "team", type: "collection" },
+  ],
+}
+```
+
+#### Adding the Singleton Definition
+Add the corresponding definition in `singletons` in `src/config/admin.config.js`:
 ```js
 {
   key: "about-us",
   label: "About Us",
-  group: "Company",
-  icon: "Award",
-  description: "Company history, mission, and team introduction.",
   fields: [
     {
-      name: "title",
-      type: "text",
-      label: "Heading Title",
-      required: true,
-      colSpan: 1,
+      name: "sectionHeader",
+      type: "group",
+      title: "Section Header",
+      fields: [
+        { name: "title", type: "text", label: "Title", required: true },
+        { name: "highlightText", type: "text", label: "Highlight Text" },
+        { name: "description", type: "textarea", label: "Description" },
+      ],
     },
     {
       name: "banner",
@@ -78,10 +100,10 @@ Add an entry to `singletons` in `src/config/admin.config.js`:
   ],
 }
 ```
-The sidebar, routing (`/admin/about-us`), form validation, and save bar are automatically wired up.
+The sidebar navigation, routing (`/admin/about-us`), form validation, and sticky save bar are automatically wired up.
 
-#### Adding a Collection (List / Multi-Item Entity)
-Add an entry to `collections` in `src/config/admin.config.js`:
+#### Adding the Collection Definition
+Add the corresponding definition in `collections` in `src/config/admin.config.js`:
 ```js
 {
   key: "testimonials",

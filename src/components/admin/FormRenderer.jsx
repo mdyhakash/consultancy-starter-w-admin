@@ -5,6 +5,25 @@ import { useWatch } from "react-hook-form";
 import { getFieldComponent } from "./fieldRegistry";
 import { cn } from "@/lib/utils";
 
+const LONG_FIELD_TYPES = new Set([
+  "textarea",
+  "richtext",
+  "repeater",
+  "group",
+  "tabs",
+  "image",
+  "video",
+  "file",
+  "media",
+]);
+
+const isLongField = (field) => {
+  if (field.colSpan === 2 || field.fullWidth) return true;
+  if (field.multiline) return true;
+  if (LONG_FIELD_TYPES.has(field.type)) return true;
+  return false;
+};
+
 /**
  * FieldItem handles conditional visibility (showIf) and renders the registered component.
  */
@@ -27,17 +46,13 @@ const FieldItem = ({ field, form, prefix = "" }) => {
   }
 
   const Component = getFieldComponent(field.type);
-
-  // Determine grid span: repeaters, tabs, rich text, groups, textareas default to full width
-  const isWide =
-    field.colSpan === 2 ||
-    ["repeater", "tabs", "group", "richtext", "textarea"].includes(field.type);
+  const isWide = isLongField(field);
 
   return (
     <div
       className={cn(
         "w-full transition-all",
-        isWide ? "col-span-1 md:col-span-2" : "col-span-1"
+        isWide ? "col-span-full" : "col-span-1"
       )}
     >
       <Component
@@ -60,7 +75,7 @@ const FieldItem = ({ field, form, prefix = "" }) => {
 
 /**
  * FormRenderer: Schema-driven recursive form generator.
- * Standardizes max-w ~900px, 2-column responsive layout without nested card fatigue.
+ * Responsive grid: 1 col on mobile, 2 cols on lg, long fields span full width.
  */
 export const FormRenderer = ({
   fields = [],
@@ -75,7 +90,7 @@ export const FormRenderer = ({
   return (
     <div
       className={cn(
-        "grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4 w-full max-w-[900px]",
+        "grid grid-cols-1 lg:grid-cols-2 gap-4 w-full",
         className
       )}
     >

@@ -1,9 +1,5 @@
-import DashboardView from "@/views/admin/DashboardView";
-
-export const metadata = {
-  title: "Dashboard - Admin CMS",
-};
+import { redirect } from "next/navigation";
 
 export default function AdminPage() {
-  return <DashboardView />;
+  redirect("/admin/home-hero");
 }

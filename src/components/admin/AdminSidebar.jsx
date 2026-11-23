@@ -1,195 +1,268 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Sidebar,
   SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarRail,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import adminConfig from "@/config/admin.config";
 import {
-  Award,
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import adminConfig from "@/config/admin.config";
+import { cn } from "@/lib/utils";
+import {
+  Briefcase,
   Calendar,
+  ChevronRight,
   ExternalLink,
   File,
   FileText,
+  Globe,
+  HelpCircle,
   Home,
   Images,
-  LayoutDashboard,
+  Info,
+  Mail,
+  MessageSquareQuote,
   Settings,
-  Sparkles,
+  ShieldAlert,
+  Video,
 } from "lucide-react";
 
 const iconMap = {
-  Sparkles,
-  Award,
-  Settings,
-  FileText,
-  Calendar,
-  Images,
-  LayoutDashboard,
   Home,
+  Info,
+  Briefcase,
+  Globe,
+  MessageSquareQuote,
+  Calendar,
+  FileText,
+  HelpCircle,
+  Video,
+  Mail,
+  Images,
+  ShieldAlert,
+  Settings,
 };
 
 function getIcon(name) {
   const IconComp = iconMap[name] || File;
-  return <IconComp className="w-4 h-4 shrink-0" />;
+  return <IconComp className="size-5 shrink-0 text-muted-foreground" />;
+}
+
+function getNodeHref(node) {
+  if (node.type === "gallery" || node.key === "gallery") {
+    return "/admin/gallery";
+  }
+  if (node.type === "collection") {
+    return `/admin/c/${node.key}`;
+  }
+  if (node.key === "settings") {
+    return "/admin/settings";
+  }
+  return `/admin/${node.key}`;
+}
+
+function isNodeActive(node, pathname) {
+  const href = getNodeHref(node);
+  if (node.type === "collection") {
+    return pathname === href || pathname.startsWith(`${href}/`);
+  }
+  return pathname === href;
+}
+
+function BrandLogo({ src, name }) {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    if (!src) {
+      setHasError(true);
+      return;
+    }
+    const img = new Image();
+    img.src = src;
+    img.onload = () => setIsLoaded(true);
+    img.onerror = () => setHasError(true);
+  }, [src]);
+
+  const initial = (name || "A").trim().charAt(0).toUpperCase();
+
+  // If image not loaded or failed, render size-9 rounded box with first letter
+  if (!isLoaded || hasError) {
+    return (
+      <div className="size-9 rounded-md bg-foreground text-background flex items-center justify-center text-sm font-bold shrink-0">
+        {initial}
+      </div>
+    );
+  }
+
+  return (
+    <div className="size-9 rounded-md overflow-hidden flex items-center justify-center shrink-0 bg-muted/40">
+      <img
+        src={src}
+        alt={name || "Brand Logo"}
+        onError={() => setHasError(true)}
+        className="w-full h-full object-contain p-0.5"
+      />
+    </div>
+  );
+}
+
+function NavGroupNode({ item, pathname }) {
+  const isChildActive = (item.children || []).some((child) =>
+    isNodeActive(child, pathname)
+  );
+
+  const [isOpen, setIsOpen] = useState(isChildActive);
+
+  useEffect(() => {
+    if (isChildActive) {
+      setIsOpen(true);
+    }
+  }, [isChildActive, pathname]);
+
+  return (
+    <Collapsible
+      asChild
+      open={isOpen}
+      onOpenChange={setIsOpen}
+      className="group/collapsible"
+    >
+      <SidebarMenuItem>
+        <CollapsibleTrigger asChild>
+          <SidebarMenuButton
+            tooltip={item.label}
+            className="cursor-pointer text-base font-medium h-10 px-3 hover:bg-muted/60"
+          >
+            {getIcon(item.icon)}
+            <span className="truncate">{item.label}</span>
+            <ChevronRight className="ml-auto size-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+          </SidebarMenuButton>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <SidebarMenuSub className="my-1 border-l-0 pl-3">
+            {item.children.map((subItem) => {
+              const active = isNodeActive(subItem, pathname);
+              const subHref = getNodeHref(subItem);
+
+              return (
+                <SidebarMenuSubItem key={subItem.key || subItem.label}>
+                  <SidebarMenuSubButton
+                    asChild
+                    isActive={active}
+                    className="text-[15px] h-10 rounded px-2.5 hover:bg-muted/70 transition-colors cursor-pointer data-[active=true]:bg-muted data-[active=true]:font-medium data-[active=true]:text-foreground"
+                  >
+                    <Link href={subHref}>
+                      <span className="truncate">{subItem.label}</span>
+                    </Link>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
+              );
+            })}
+          </SidebarMenuSub>
+        </CollapsibleContent>
+      </SidebarMenuItem>
+    </Collapsible>
+  );
 }
 
 export function AdminSidebar() {
   const pathname = usePathname();
 
-  // Group singletons and collections by group
-  const groupedNav = React.useMemo(() => {
-    const groups = {};
-
-    // Singletons
-    (adminConfig.singletons || []).forEach((item) => {
-      const g = item.group || "Pages";
-      if (!groups[g]) groups[g] = [];
-      groups[g].push({
-        title: item.label,
-        url: item.key === "settings" ? "/admin/settings" : `/admin/${item.key}`,
-        icon: item.icon,
-        key: item.key,
-        type: "singleton",
-      });
-    });
-
-    // Collections
-    (adminConfig.collections || []).forEach((item) => {
-      const g = item.group || "Content";
-      if (!groups[g]) groups[g] = [];
-      groups[g].push({
-        title: item.label,
-        url: `/admin/c/${item.key}`,
-        icon: item.icon,
-        key: item.key,
-        type: "collection",
-      });
-    });
-
-    return groups;
-  }, []);
-
   return (
-    <Sidebar collapsible="icon" className="border-r border-border">
-      <SidebarHeader className="border-b border-border/80 px-4 py-3">
-        <Link
-          href="/admin"
-          className="flex items-center gap-2.5 font-semibold text-sm tracking-tight text-foreground"
-        >
-          {adminConfig.brand.logo ? (
-            <img
-              src={adminConfig.brand.logo}
-              alt={adminConfig.brand.name}
-              className="w-6 h-6 object-contain rounded"
-            />
-          ) : (
-            <div className="w-6 h-6 rounded bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
-              CMS
-            </div>
-          )}
-          <span className="truncate group-data-[collapsible=icon]:hidden">
-            {adminConfig.brand.name}
-          </span>
-        </Link>
+    <Sidebar
+      collapsible="icon"
+      className="border-r border-border bg-sidebar w-[280px]"
+    >
+      {/* Sidebar Header with Brand Logo & Labels */}
+      <SidebarHeader className="border-b border-border/80 px-4 py-3.5">
+        <div className="flex items-center gap-3">
+          <BrandLogo
+            src={adminConfig.brand.logo}
+            name={adminConfig.brand.name}
+          />
+          <div className="flex flex-col min-w-0 group-data-[collapsible=icon]:hidden">
+            <span className="font-semibold text-base text-foreground truncate leading-tight">
+              {adminConfig.brand.name}
+            </span>
+            {adminConfig.brand.subLabel && (
+              <span className="text-xs font-medium tracking-wider text-muted-foreground uppercase leading-tight mt-0.5">
+                {adminConfig.brand.subLabel}
+              </span>
+            )}
+          </div>
+        </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-2 py-3">
-        {/* Core items */}
-        <SidebarGroup>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                isActive={pathname === "/admin"}
-                tooltip="Dashboard"
-              >
-                <Link href="/admin" className="flex items-center gap-2 text-xs">
-                  <LayoutDashboard className="w-4 h-4 shrink-0" />
-                  <span>Dashboard</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+      {/* Nav Tree Content */}
+      <SidebarContent className="px-2 py-3 overflow-y-auto">
+        <SidebarMenu className="gap-1">
+          {(adminConfig.nav || []).map((node) => {
+            const hasChildren =
+              Array.isArray(node.children) && node.children.length > 0;
 
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                isActive={pathname.startsWith("/admin/gallery")}
-                tooltip="Media Gallery"
-              >
-                <Link href="/admin/gallery" className="flex items-center gap-2 text-xs">
-                  <Images className="w-4 h-4 shrink-0" />
-                  <span>Media Gallery</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroup>
+            if (hasChildren) {
+              return (
+                <NavGroupNode
+                  key={node.label}
+                  item={node}
+                  pathname={pathname}
+                />
+              );
+            }
 
-        {/* Dynamic Schema Groups */}
-        {Object.entries(groupedNav).map(([groupTitle, items]) => (
-          <SidebarGroup key={groupTitle} className="pt-2">
-            <SidebarGroupLabel className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-2">
-              {groupTitle}
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {items.map((item) => {
-                  const isActive =
-                    pathname === item.url ||
-                    (item.type === "collection" &&
-                      pathname.startsWith(`/admin/c/${item.key}`));
+            const active = isNodeActive(node, pathname);
+            const href = getNodeHref(node);
 
-                  return (
-                    <SidebarMenuItem key={item.key}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={isActive}
-                        tooltip={item.title}
-                      >
-                        <Link
-                          href={item.url}
-                          className="flex items-center gap-2 text-xs"
-                        >
-                          {getIcon(item.icon)}
-                          <span>{item.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
+            return (
+              <SidebarMenuItem key={node.key || node.label}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={active}
+                  tooltip={node.label}
+                  className="text-base font-medium h-10 px-3 cursor-pointer data-[active=true]:bg-muted data-[active=true]:font-medium data-[active=true]:text-foreground"
+                >
+                  <Link href={href} className="flex items-center gap-2.5">
+                    {getIcon(node.icon)}
+                    <span className="truncate">{node.label}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
+        </SidebarMenu>
       </SidebarContent>
 
+      {/* Footer */}
       <SidebarFooter className="border-t border-border/80 p-2">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
               tooltip="View Website"
+              className="text-sm text-muted-foreground hover:text-foreground cursor-pointer h-9 px-3"
             >
               <a
                 href={adminConfig.brand.siteUrl || "/"}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground"
+                className="flex items-center gap-2.5"
               >
-                <ExternalLink className="w-4 h-4 shrink-0" />
+                <ExternalLink className="size-4 shrink-0" />
                 <span>View Website</span>
               </a>
             </SidebarMenuButton>

@@ -19,13 +19,13 @@ export function AdminLayoutClient({ children }) {
         style={{ "--brand": "var(--primary)" }}
       >
         {children}
-        <Toaster position="top-right" richColors />
+        <Toaster position="bottom-right" richColors />
       </div>
     );
   }
 
   return (
-    <SidebarProvider>
+    <SidebarProvider style={{ "--sidebar-width": "17.5rem" }}>
       <div
         className="flex min-h-screen w-full bg-background text-foreground antialiased"
         style={{ "--brand": "var(--primary)" }}
@@ -33,12 +33,12 @@ export function AdminLayoutClient({ children }) {
         <AdminSidebar />
         <SidebarInset className="flex flex-col flex-1 min-w-0 bg-background">
           <AdminHeader />
-          <main className="flex-1 p-4 md:p-6 max-w-6xl w-full mx-auto">
+          <main className="flex-1 w-full px-6 py-5 pb-8">
             {children}
           </main>
         </SidebarInset>
       </div>
-      <Toaster position="top-right" richColors />
+      <Toaster position="bottom-right" richColors />
     </SidebarProvider>
   );
 }

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import FormRenderer from "../FormRenderer";
+import FormRenderer from "./FormRenderer";
 import { cn } from "@/lib/utils";
 
 export const TabsField = ({
@@ -23,7 +23,7 @@ export const TabsField = ({
         </label>
       )}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full justify-start h-9 bg-muted/60 p-1 border border-border/60 rounded-md">
+        <TabsList className="w-full justify-start h-9 bg-muted/60 p-1 rounded-md">
           {tabs.map((tab) => (
             <TabsTrigger
               key={tab.id}

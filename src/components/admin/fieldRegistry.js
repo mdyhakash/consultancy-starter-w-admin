@@ -1,30 +1,30 @@
-import CompactFieldInput from "./fields/CompactFieldInput";
-import CompactFieldSelect from "./fields/CompactFieldSelect";
-import CompactFieldSwitch from "./fields/CompactFieldSwitch";
-import CompactFieldDatePicker from "./fields/CompactFieldDatePicker";
-import CompactEditor from "./fields/CompactEditor";
-import CompactGalleryUploader from "./fields/CompactGalleryUploader";
-import GroupField from "./fields/GroupField";
-import RepeaterField from "./fields/RepeaterField";
-import TabsField from "./fields/TabsField";
+import FieldInput from "@/components/common/Formik/FieldInput";
+import FieldSelect from "@/components/common/Formik/FieldSelect";
+import FieldSwitch from "@/components/common/Formik/FieldSwitch";
+import FieldDatePicker from "@/components/common/Formik/FieldDatePicker";
+import Editor from "@/components/common/editor/Editor";
+import FileUploaderInGallery from "@/components/common/FileUploaderInGallery";
+import GroupField from "./GroupField";
+import RepeaterField from "./RepeaterField";
+import TabsField from "./TabsField";
 
 /**
- * Extensible registry mapping schema field types to UI components.
- * Adding a new field type across the entire CMS only requires adding one entry here.
+ * Extensible registry mapping schema field types directly to common starter components.
+ * No duplicate compact wrappers needed - reuses common components directly.
  */
 export const fieldRegistry = {
-  text: CompactFieldInput,
-  textarea: (props) => <CompactFieldInput {...props} multiline={true} />,
-  number: (props) => <CompactFieldInput {...props} type="number" />,
-  url: (props) => <CompactFieldInput {...props} type="url" />,
-  email: (props) => <CompactFieldInput {...props} type="email" />,
-  select: CompactFieldSelect,
-  toggle: CompactFieldSwitch,
-  date: CompactFieldDatePicker,
-  richtext: CompactEditor,
-  image: CompactGalleryUploader,
-  video: CompactGalleryUploader,
-  file: CompactGalleryUploader,
+  text: FieldInput,
+  textarea: (props) => <FieldInput {...props} multiline={true} rows={3} />,
+  number: (props) => <FieldInput {...props} type="number" />,
+  url: (props) => <FieldInput {...props} type="url" />,
+  email: (props) => <FieldInput {...props} type="email" />,
+  select: FieldSelect,
+  toggle: FieldSwitch,
+  date: FieldDatePicker,
+  richtext: Editor,
+  image: FileUploaderInGallery,
+  video: FileUploaderInGallery,
+  file: FileUploaderInGallery,
   group: GroupField,
   repeater: RepeaterField,
   tabs: TabsField,

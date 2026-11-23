@@ -1,28 +1,50 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import adminConfig from "@/config/admin.config";
 import adminApi from "@/lib/admin-api";
 import { ExternalLink, LogOut, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
+function getPageTitle(pathname) {
+  if (pathname === "/admin/gallery") return "Media Gallery";
+  if (pathname === "/admin/settings") return "Global Settings";
+
+  if (pathname.startsWith("/admin/c/")) {
+    const parts = pathname.replace("/admin/c/", "").split("/").filter(Boolean);
+    const collectionKey = parts[0];
+    const subAction = parts[1];
+
+    const collection = (adminConfig.collections || []).find(
+      (c) => c.key === collectionKey
+    );
+    const singularName =
+      collection?.label?.replace(/s$/, "") || collectionKey;
+
+    if (subAction === "new") return `New ${singularName}`;
+    if (subAction) return `Edit ${singularName}`;
+    return collection?.label || collectionKey;
+  }
+
+  const singletonKey = pathname.replace("/admin/", "").split("/")[0];
+  const singleton = (adminConfig.singletons || []).find(
+    (s) => s.key === singletonKey
+  );
+  if (singleton) return singleton.label;
+
+  return "Admin Panel";
+}
+
 export function AdminHeader() {
   const pathname = usePathname();
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
+
+  const pageTitle = getPageTitle(pathname);
 
   const handleLogout = async () => {
     try {
@@ -37,69 +59,25 @@ export function AdminHeader() {
     }
   };
 
-  // Generate breadcrumb items from pathname
-  const pathSegments = pathname
-    .split("/")
-    .filter(Boolean)
-    .filter((seg) => seg !== "admin");
-
   return (
-    <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between gap-2 border-b border-border bg-background/95 backdrop-blur-md px-4">
-      <div className="flex items-center gap-3">
+    <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between gap-2 border-b border-border bg-background/95 backdrop-blur-md px-4 w-full">
+      {/* Left: Sidebar trigger + ADMIN badge + Page Title */}
+      <div className="flex items-center gap-2.5 min-w-0">
         <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground cursor-pointer" />
-        <Separator orientation="vertical" className="mr-1 h-4" />
+        <Separator orientation="vertical" className="h-4" />
 
-        <Breadcrumb>
-          <BreadcrumbList className="text-xs">
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <Link href="/admin">Admin</Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-
-            {pathSegments.map((segment, idx) => {
-              const isLast = idx === pathSegments.length - 1;
-              const href = `/admin/${pathSegments.slice(0, idx + 1).join("/")}`;
-
-              // Pretty label mapping
-              let label = segment;
-              if (segment === "c") return null; // Skip collection route prefix in breadcrumb
-              if (segment === "new") label = "New";
-              else {
-                const foundSingleton = adminConfig.singletons.find(
-                  (s) => s.key === segment
-                );
-                const foundCollection = adminConfig.collections.find(
-                  (c) => c.key === segment
-                );
-                if (foundSingleton) label = foundSingleton.label;
-                else if (foundCollection) label = foundCollection.label;
-              }
-
-              return (
-                <React.Fragment key={href}>
-                  <BreadcrumbSeparator />
-                  <BreadcrumbItem>
-                    {isLast ? (
-                      <BreadcrumbPage className="font-medium text-foreground capitalize">
-                        {label}
-                      </BreadcrumbPage>
-                    ) : (
-                      <BreadcrumbLink asChild>
-                        <Link href={href} className="capitalize">
-                          {label}
-                        </Link>
-                      </BreadcrumbLink>
-                    )}
-                  </BreadcrumbItem>
-                </React.Fragment>
-              );
-            })}
-          </BreadcrumbList>
-        </Breadcrumb>
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="shrink-0 px-2 py-0.5 rounded text-sm font-medium tracking-wide uppercase bg-muted text-foreground">
+            ADMIN
+          </span>
+          <span className="text-sm font-medium text-foreground truncate">
+            {pageTitle}
+          </span>
+        </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      {/* Right: View Website + Logout */}
+      <div className="flex items-center gap-2 shrink-0">
         <Button
           variant="ghost"
           size="sm"
